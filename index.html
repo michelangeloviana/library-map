@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Library Location Map</title>
+
+<style>
+
+body{
+    font-family: "Noto Sans", "Segoe UI", Arial, sans-serif;
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 20px;
+    background-color: #f5f7fa;
+}
+
+h1{
+    color:#003B5C;
+}
+
+.info-box{
+    background:white;
+    border-left:5px solid #0073cf;
+    padding:15px;
+    margin-bottom:20px;
+    box-shadow:0 2px 5px rgba(0,0,0,.1);
+}
+
+#map-container{
+    position:relative;
+    display:inline-block;
+    border:1px solid #ccc;
+    background:white;
+    box-shadow:0 2px 10px rgba(0,0,0,.15);
+}
+
+#floorplan{
+    width:100%;
+    max-width:900px;
+    display:block;
+}
+
+#highlight{
+    position:absolute;
+    border:4px solid red;
+    background:rgba(255,0,0,.25);
+    display:none;
+    box-sizing:border-box;
+}
+
+#label{
+    position:absolute;
+    background:red;
+    color:white;
+    font-size:14px;
+    padding:4px 8px;
+    border-radius:12px;
+    display:none;
+    white-space:nowrap;
+    font-weight:bold;
+}
+
+.legend{
+    margin-top:15px;
+    background:white;
+    padding:10px;
+    border:1px solid #ddd;
+    line-height:1.7;
+}
+
+.modern-map {
+    border-collapse: separate;
+    border-spacing: 15px;
+    width: 100%;
+    max-width: 800px;
+    margin: 10px auto;
+    font-family: "Noto Sans", "Segoe UI", Arial, sans-serif;
+}
+
+.modern-map td {
+    background: #ffffff;
+    border: 1px solid #dbe3ea;
+    border-radius: 12px;
+    padding: 20px;
+    vertical-align: top;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    width: 50%;
+}
+
+.modern-map h3 {
+    margin: 0 0 15px 0;
+    color: #1f4e79;
+    font-size: 18px;
+    border-bottom: 2px solid #e9eef3;
+    padding-bottom: 8px;
+}
+
+.modern-map .area {
+    padding: 6px 0;
+    color: #333;
+}
+
+.modern-map .reference {
+    margin-top: 15px;
+    padding: 10px;
+    background: #FFF9EB;
+    border-left: 4px solid #ffc107;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.legend h3 {
+    margin: 0 0 15px 0;
+    padding: 10px 15px;
+    font-family: "Noto Sans", "Segoe UI", Arial, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f4e79;
+    background: linear-gradient(to right, #EEF6FC, #ffffff);
+    border-left: 5px solid #1f4e79;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.title {
+    margin: 0 0 15px 0;
+    padding: 10px 15px;
+    font-family: "Noto Sans", "Segoe UI", Arial, sans-serif;
+    font-size: 30px;
+    font-weight: 600;
+    color: #1f4e79;
+    background: linear-gradient(to right, #D6E9F8, #ffffff);
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.demo-notice {
+    max-width: 900px;
+    margin: 0 auto 20px auto;
+    padding: 14px 18px;
+    background: linear-gradient(to right, #FFFFDD, #ffffff);
+    border-left: 5px solid #FEE9AA;
+	border-right: 5px solid #FEE9AA;
+    border-radius: 8px;
+    color: #55415c;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    line-height: 1.5;
+    font-size: 13px;
+}
+
+.demo-notice strong {
+    color: #55415c;
+}
+
+.demo-notice a {
+    color: #0073cf;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.demo-notice a:hover {
+    text-decoration: underline;
+}
+
+</style>
+</head>
+<body>
+
+<h1 class=title>Library Item Location</h1>
+
+<div class="demo-notice">
+    <strong>DEMONSTRATION ONLY.</strong><br>
+    This library map is a sample implementation of the EBSCO Discovery Service
+    Custom Map Service feature relased on June 16, 2026.<br>For details on how to use it, please refer to the implementation guide:
+    <a href="https://connect.ebsco.com/s/article/Integrating-a-custom-map-service?language=en_US"
+       target="_blank">
+       Integrating a Custom Map Service for EDS</a>.<br>
+	   <strong>Note</strong>: the "map service" page (rules, image, map indication...) needs to be created and maintained by the library or contracted provider.
+</div>
+
+<div class="info-box" id="itemInfo"></div>
+
+<div id="map-container">
+
+    <img
+        id="floorplan"
+        src="maps/floorplan.jpg"
+        alt="Library Floor Plan">
+
+    <div id="highlight"></div>
+    <div id="label"></div>
+
+</div>
+
+<div class="legend">
+    <h3>Shelf Zones</h3>
+	<table class="modern-map">
+		<tr>
+			<td>
+				<h3>📚 Alphabetic Collections</h3>
+
+				<div class="area">Area 1 = A-D</div>
+				<div class="area">Area 2 = E-G</div>
+				<div class="area">Area 3 = H-L</div>
+				<div class="area">Area 4 = M-Q</div>
+				<div class="area">Area 5 = R-Z</div>
+			</td>
+
+			<td>
+				<h3>🔢 Dewey Collections</h3>
+
+				<div class="area">Area 6 = 000-299</div>
+				<div class="area">Area 7 = 300-499</div>
+				<div class="area">Area 8 = 500-699</div>
+				<div class="area">Area 9 = 700-999</div>
+
+				<div class="reference">
+					Reference Desk = Special Materials
+				</div>
+			</td>
+		</tr>
+	</table>
+</div>
+
+<script>
+
+// ======================================================
+// READ URL PARAMETERS
+// ======================================================
+
+const params = new URLSearchParams(window.location.search);
+
+const library =
+    decodeURIComponent(
+        params.get("library") ||
+        "Main Library Stacks"
+    );
+
+const itemLocation =
+    decodeURIComponent(
+        params.get("location") ||
+        ""
+    );
+
+const callno =
+    decodeURIComponent(
+        params.get("callno") ||
+        ""
+    );
+
+const ils =
+    decodeURIComponent(
+        params.get("ils") ||
+        ""
+    );
+
+// ======================================================
+// DISPLAY ITEM INFO
+// ======================================================
+
+document.getElementById("itemInfo").innerHTML = `
+    <strong>Call Number:</strong> ${callno}<br>
+    <strong>Library:</strong> ${library}<br>
+    <strong>Location:</strong> ${itemLocation || "Not provided"}<br><br>
+
+    Item with call number
+    <strong>${callno}</strong>
+    can be found in
+    <strong>${library}</strong>
+    here:
+`;
+
+// ======================================================
+// MAP ZONES
+// Coordinates are percentages of image size
+// ======================================================
+
+const MAP_ZONES = {
+
+    ONLINE: {
+        shelf: "💻 On Line material: Use the link in the record to access it.",
+        left: 0,
+        top: 0,
+        width: 100,
+        height: 100
+    },
+
+    REFERENCE: {
+        shelf: "⚠️ Ask it on Reference Desk",
+        left: 2,
+        top: 71,
+        width: 26,
+        height: 27
+    },
+
+    AREA1: {
+        shelf: "Area 1 (A-D)",
+        left: 7,
+        top: 47,
+        width: 17,
+        height: 24
+    },
+
+    AREA2: {
+        shelf: "Area 2 (E-G)",
+        left: 24,
+        top: 47,
+        width: 16,
+        height: 24
+    },
+
+    AREA3: {
+        shelf: "Area 3 (H-L)",
+        left: 41,
+        top: 47,
+        width: 16,
+        height: 24
+    },
+
+    AREA4: {
+        shelf: "Area 4 (M-Q)",
+        left: 58,
+        top: 47,
+        width: 17,
+        height: 24
+    },
+
+    AREA5: {
+        shelf: "Area 5 (R-Z)",
+        left: 76,
+        top: 47,
+        width: 18,
+        height: 24
+    },
+
+    AREA6: {
+        shelf: "Area 6 (000-200)",
+        left: 7,
+        top: 13,
+        width: 21,
+        height: 29
+    },
+
+    AREA7: {
+        shelf: "Area 7 (300-400)",
+        left: 29,
+        top: 13,
+        width: 20,
+        height: 28
+    },
+
+    AREA8: {
+        shelf: "Area 8 (500-600)",
+        left: 50,
+        top: 13,
+        width: 20,
+        height: 28
+    },
+
+    AREA9: {
+        shelf: "Area 9 (700-900)",
+        left: 72,
+        top: 13,
+        width: 21,
+        height: 28
+    }
+};
+
+// ======================================================
+// DETERMINE LOCATION
+// ======================================================
+
+function getShelfLocation(callNumber, itemLocation){
+
+    const normalizedCallNumber =
+        (callNumber || "").trim().toUpperCase();
+
+    const normalizedLocation =
+        (itemLocation || "").trim().toUpperCase();
+
+    // =====================================
+    // REFERENCE DESK
+    // =====================================
+
+		if(
+			normalizedCallNumber.startsWith("NEEDS CALL NUMBER") ||
+			normalizedCallNumber.length === 0 ||
+			normalizedLocation.includes("RESERVESQE") ||
+			normalizedCallNumber.includes("REFERENCE") ||
+			normalizedCallNumber.startsWith("REF ")
+		){
+			return MAP_ZONES.REFERENCE;
+		}
+		
+		if(
+			normalizedCallNumber.startsWith("ON LINE")
+		){
+			return MAP_ZONES.ONLINE;
+		} 
+
+    // =====================================
+    // DEWEY DECIMAL
+    // Examples:
+    // 005.133
+    // 150
+    // 658.4
+    // 920
+    // =====================================
+
+    const deweyMatch =
+        normalizedCallNumber.match(/^(\d{1,3})/);
+		// alert(deweyMatch);
+
+    if(deweyMatch){
+
+        const number =
+            parseInt(deweyMatch[1], 10);
+			// alert(number);
+
+        if(number <= 299)
+            return MAP_ZONES.AREA6;
+
+        if(number <= 499)
+            return MAP_ZONES.AREA7;
+
+        if(number <= 699)
+            return MAP_ZONES.AREA8;
+
+        if(number <= 999)
+            return MAP_ZONES.AREA9;
+
+        return MAP_ZONES.AREA5;
+    }
+
+    // =====================================
+    // LIBRARY OF CONGRESS
+    // Examples:
+    // QA76.73
+    // Z694.15
+    // HB615
+    // PN1995
+    // =====================================
+
+    const lcMatch =
+        normalizedCallNumber.match(/[A-Z]/);
+
+    if(!lcMatch){
+        // return null;
+		return MAP_ZONES.REFERENCE;
+    }
+
+    const letter =
+        lcMatch[0];
+
+    if(letter >= "A" && letter <= "D")
+        return MAP_ZONES.AREA1;
+
+    if(letter >= "E" && letter <= "G")
+        return MAP_ZONES.AREA2;
+
+    if(letter >= "H" && letter <= "L")
+        return MAP_ZONES.AREA3;
+
+    if(letter >= "M" && letter <= "Q")
+        return MAP_ZONES.AREA4;
+
+    if(letter >= "R" && letter <= "Z")
+        return MAP_ZONES.AREA5;
+
+    return null;
+}
+
+// ======================================================
+// DRAW HIGHLIGHT
+// ======================================================
+
+const area =
+    getShelfLocation(
+        callno,
+        itemLocation
+    );
+
+if(area){
+
+    const highlight =
+        document.getElementById("highlight");
+
+    const label =
+        document.getElementById("label");
+
+    highlight.style.display = "block";
+
+    highlight.style.left =
+        area.left + "%";
+
+    highlight.style.top =
+        area.top + "%";
+
+    highlight.style.width =
+        area.width + "%";
+
+    highlight.style.height =
+        area.height + "%";
+
+    label.style.display = "block";
+
+    label.style.left =
+        area.left + "%";
+
+    label.style.top =
+        (area.top - 5) + "%";
+
+    label.innerHTML =
+        area.shelf;
+
+}else{
+
+    document.getElementById("itemInfo").innerHTML += `
+        <br><br>
+        <strong>
+        Unable to determine shelf location: <i>ask it on Reference Desk</i>.
+        </strong>
+    `;
+}
+
+</script>
+
+</body>
+</html>
