@@ -165,9 +165,95 @@ h1{
     text-decoration: underline;
 }
 
+/* ==========================================
+   MODAL
+========================================== */
+
+.modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    display:none;
+
+    justify-content:center;
+    align-items:center;
+
+    z-index:9999;
+}
+
+.modal-box{
+    width:90%;
+    max-width:450px;
+
+    background:white;
+
+    border-radius:12px;
+
+    padding:25px;
+
+    text-align:center;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+
+    animation:modalFade .25s ease;
+}
+
+.modal-box h2{
+    margin-top:0;
+    color:#1f4e79;
+}
+
+.modal-box p{
+    font-size:16px;
+    margin:15px 0 25px;
+}
+
+.modal-box button{
+    background:#0073cf;
+    color:white;
+
+    border:none;
+
+    padding:10px 20px;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+    font-size:14px;
+}
+
+.modal-box button:hover{
+    background:#005da6;
+}
+
+@keyframes modalFade{
+
+    from{
+        opacity:0;
+        transform:translateY(-20px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}
+
 </style>
 </head>
 <body>
+
+<div id="callnoModal" class="modal-overlay">
+    <div class="modal-box">
+        <p>Please inform a valid Call Number (callno=XXX).</p>
+        <button onclick="closeModal()">
+            Close
+        </button>
+    </div>
+</div>
+
 
 <h1 class=title>Library Item Location</h1>
 
@@ -256,6 +342,27 @@ const ils =
         params.get("ils") ||
         ""
     );
+	
+
+// ======================================================
+// DEMO MODE (NO EDS PARAMETERS)
+// ======================================================
+
+const hasRealCallNumber =
+    callno &&
+    !callno.includes("{{") &&
+    callno.trim() !== "";
+
+if(!hasRealCallNumber){
+
+    document.getElementById("itemInfo")
+        .style.display = "none";
+
+    showModal(
+        "Please inform a valid Call Number<br><pre>[ ?callno=123.456 ]</pre>"
+    );
+}
+	
 
 // ======================================================
 // DISPLAY ITEM INFO
@@ -525,6 +632,26 @@ if(area){
         </strong>
     `;
 }
+
+// MODAL POP UP
+
+function showModal(message){
+
+    const modal =
+        document.getElementById("callnoModal");
+
+    modal.querySelector("p").innerHTML =
+        message;
+
+    modal.style.display = "flex";
+}
+
+function closeModal(){
+
+    document.getElementById("callnoModal")
+        .style.display = "none";
+}
+
 
 </script>
 
